@@ -78,6 +78,7 @@ class RFA(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector.ranking_
         [some output here]
     """
+
     def __init__(self, estimator, n_features_to_select=None, step=1,
                  estimator_params=None, verbose=0):
         self.estimator = estimator
@@ -115,8 +116,7 @@ class RFA(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
                           "and will be removed in 0.18. The parameter is no longer "
                           "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
+                          "or set_params function.", DeprecationWarning)
 
         support_ = np.zeros(n_features, dtype=np.bool)
         ranking_ = n_features * np.ones(n_features, dtype=np.int)
@@ -133,39 +133,41 @@ class RFA(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             if self.estimator_params:
                 estimator.set_params(**self.estimator_params)
             if self.verbose > 0:
-                print("Fitting estimator with %d features." % np.sum(support_)+1)
-            
+                print("Fitting estimator with %d features." %
+                      np.sum(support_) + 1)
+
             scores = np.zeros(len(features_to_test))
             for feature_index, test_feature in enumerate(features_to_test):
                 estimator.fit(X[:, features], y)
                 scores[feature_index] = TEST_FUNCTION(estimator)
-            
+
             # Sort the scores in ascending order
             score_order_index = np.argsort(scores)
-            ordered_scores   = scores[score_order_index]
+            ordered_scores = scores[score_order_index]
             ordered_features = features_to_test[score_order_index]
-            
+
             # Break if no features can improve score
             if last_score < ordered_scores[0]:
                 break
-            
-            # Only add `step` many features if it doesn't take us past the target
+
+            # Only add `step` many features if it doesn't take us past the
+            # target
             n_add = min(step, n_features_to_select - np.sum(support_))
-            
+
             # Only add features which don't make performance go down
             n_add = min(n_add, len(np.nonzero(ordered_scores < last_score)))
-            
+
             # Select best.
             # We will MINIMISE scoring function!!!
             features_to_add = ordered_features[0:n_add]
-            
+
             # Add the features
             support_[features_to_add] = True
-            ranking_[features_to_add] = np.sum(support_) + 1 + np.arange(features_to_add)
-            
+            ranking_[features_to_add] = np.sum(
+                support_) + 1 + np.arange(features_to_add)
+
             # Update score monitor
             last_score = ordered_scores[0]
-            
 
         # Set final attributes
         self.estimator_ = clone(self.estimator)
@@ -287,6 +289,7 @@ class RFACV(RFA, MetaEstimatorMixin):
     >>> selector.ranking_
     OUTPUT
     """
+
     def __init__(self, estimator, step=1, cv=None, scoring=None,
                  estimator_params=None, verbose=0):
         self.estimator = estimator
@@ -313,8 +316,7 @@ class RFACV(RFA, MetaEstimatorMixin):
             warnings.warn("The parameter 'estimator_params' is deprecated as of version 0.16 "
                           "and will be removed in 0.18. The parameter is no longer "
                           "necessary because the value is set via the estimator initialisation "
-                          "or set_params function."
-                          , DeprecationWarning)
+                          "or set_params function.", DeprecationWarning)
         # Initialization
         rfa = RFA(estimator=self.estimator, n_features_to_select=1,
                   step=self.step, estimator_params=self.estimator_params,
