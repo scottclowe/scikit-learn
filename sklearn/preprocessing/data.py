@@ -1161,6 +1161,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <example_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1767,6 +1768,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
@@ -1892,6 +1894,154 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             Input array of type int.
 
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
+            Transformed input.
+        """
+        return _transform_selected(X, self._transform,
+                                   self.categorical_features, copy=True)
+
+
+class OrdinalHotEncoder(BaseEstimator, TransformerMixin):
+    """Encode ordinal features using a hot-if-greater-than scheme.
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by categorical (discrete) features. The output will be
+    a sparse matrix where each column corresponds to one possible value of one
+    feature. It is assumed that input features take on values in the range
+    [0, n_values).
+    This encoding is needed for feeding categorical data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
+    Parameters
+    ----------
+    n_values : 'auto', int or array of ints
+        Number of values per feature.
+        - 'auto' : determine value range from training data.
+        - int : maximum value for all features.
+        - array : maximum value per feature.
+    categorical_features: "all" or array of indices or mask
+        Specify what features are treated as categorical.
+        - 'all' (default): All features are treated as categorical.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+        Non-categorical features are always stacked to the right of the matrix.
+    dtype : number type, default=np.float
+        Desired dtype of output.
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
+    handle_unknown : str, 'error' or 'ignore'
+        Whether to raise an error or ignore if a unknown categorical feature is
+        present during transform.
+    Attributes
+    ----------
+    active_features_ : array
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+    feature_indices_ : array of shape (n_features,)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
+    n_values_ : array of shape (n_features,)
+        Maximum number of values per feature.
+    Examples
+    --------
+    Given a dataset with three features and two samples, we let the encoder
+    find the maximum value per feature and transform the data to a binary
+    one-hot encoding.
+    >>> from sklearn.preprocessing import OneHotEncoder
+    >>> enc = OneHotEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])  # doctest: +ELLIPSIS
+    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+           handle_unknown='error', n_values='auto', sparse=True)
+    >>> enc.n_values_
+    array([2, 3, 4])
+    >>> enc.feature_indices_
+    array([0, 2, 5, 9])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+    See also
+    --------
+    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
+      dictionary items (also handles string-valued features).
+    sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
+      encoding of dictionary items or strings.
+    """
+
+    def __init__(self, edge_values="auto", categorical_features="all",
+                 dtype=np.float, handle_unknown='error'):
+        self.edge_values = edge_values
+        self.categorical_features = categorical_features
+        self.dtype = dtype
+        self.handle_unknown = handle_unknown
+
+    def fit(self, X, y=None):
+        """Fit OneHotEncoder to X.
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_feature)
+            Input array of type int.
+        Returns
+        -------
+        self
+        """
+        return _transform_selected(X, self._fit,
+                                   self.categorical_features, copy=True)
+
+    def _fit(self, X):
+        """Assumes X contains only categorical features."""
+        X = check_array(X)
+
+        n_samples, n_features = X.shape
+
+        if self.edge_values == 'auto':
+            edge_values = []
+            for i in range(n_features):
+                unq = np.unique(X[:, i])
+                edg = (unq[1:] + unq[:-1]) / 2
+                edge_values.append(edg)
+        else:
+            raise NotImplementedError
+
+        self.edge_values_ = edge_values
+
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit encoder to X, then transform X.
+        Equivalent to self.fit(X).transform(X), but more convenient.
+        See fit for the parameters, transform for the return value.
+        """
+        self.fit(X, y)
+        return _transform_selected(X, self._transform,
+                                   self.categorical_features, copy=True)
+
+    def _transform(self, X):
+        """Assumes X contains only ordinal features."""
+        X = check_array(X)
+
+        n_samples, n_features = X.shape
+
+        X_t = []
+
+        for i in range(n_features):
+            n_val = len(self.edge_values_[i])
+            Xti = np.zeros((n_samples, n_val), dtype=self.dtype)
+            for j in range(n_val):
+                Xti[:, j] = X[:, i] > self.edge_values_[i][j]
+            X_t.append(Xti)
+
+        X_t = np.concatenate(X_t, axis=1)
+
+        return X_t
+
+    def transform(self, X):
+        """Transform X using one-hot encoding.
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input array of type int.
         Returns
         -------
         X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
