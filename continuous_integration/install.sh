@@ -45,11 +45,17 @@ if [[ "$DISTRIB" == "conda" ]]; then
         wget http://repo.continuum.io/miniconda/Miniconda-3.6.0-Linux-x86_64.sh \
             -O miniconda.sh
         fi
-    chmod +x miniconda.sh && ./miniconda.sh -b
+    chmod +x miniconda.sh
+    if [ ! -d "$HOME/miniconda/bin" ]; then
+        ./miniconda.sh -b
+    fi
     cd ..
-    export PATH=/home/travis/miniconda/bin:$PATH
+    export PATH="$HOME/miniconda/bin:$PATH"
     conda update --yes conda
     popd
+
+    # Remove testenv leftover from last build
+    conda remove -n testenv || echo "No environment 'testenv' to remove";
 
     # Configure the conda environment and put it in the path using the
     # provided versions
