@@ -24,7 +24,8 @@ echo 'pip:'
 ls $HOME/.cache/pip
 echo 'download'
 ls $HOME/download
-
+echo 'miniconda'
+ls $HOME/miniconda
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
