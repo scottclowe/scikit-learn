@@ -56,7 +56,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
     popd
 
     # Remove testenv leftover from last build
-    conda remove -n testenv || echo "No environment 'testenv' to remove";
+    conda remove --yes -n testenv --all || \
+        echo "No environment 'testenv' to remove";
 
     # Configure the conda environment and put it in the path using the
     # provided versions
