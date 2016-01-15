@@ -47,6 +47,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
         fi
     chmod +x miniconda.sh
     if [ ! -d "$HOME/miniconda/bin" ]; then
+        if [ -d "$HOME/miniconda" ]; then rm -r "$HOME/miniconda"; fi;
         ./miniconda.sh -b
     fi
     cd ..
