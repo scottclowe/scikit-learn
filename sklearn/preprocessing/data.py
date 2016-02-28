@@ -40,6 +40,7 @@ __all__ = [
     'MaxAbsScaler',
     'Normalizer',
     'OneHotEncoder',
+    'OrdinalHotEncoder',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
@@ -1910,55 +1911,56 @@ class OrdinalHotEncoder(BaseEstimator, TransformerMixin):
     [0, n_values).
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
+
     Parameters
     ----------
     n_values : 'auto', int or array of ints
         Number of values per feature.
+
         - 'auto' : determine value range from training data.
         - int : maximum value for all features.
         - array : maximum value per feature.
+
     categorical_features: "all" or array of indices or mask
         Specify what features are treated as categorical.
+
         - 'all' (default): All features are treated as categorical.
         - array of indices: Array of categorical feature indices.
         - mask: Array of length n_features and with dtype=bool.
+
         Non-categorical features are always stacked to the right of the matrix.
+
     dtype : number type, default=np.float
         Desired dtype of output.
+
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
+
     handle_unknown : str, 'error' or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
         present during transform.
+
     Attributes
     ----------
     active_features_ : array
         Indices for active features, meaning values that actually occur
         in the training set. Only available when n_values is ``'auto'``.
     feature_indices_ : array of shape (n_features,)
+
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
         (and then potentially masked by `active_features_` afterwards)
+
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
+
     Examples
     --------
     Given a dataset with three features and two samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
     one-hot encoding.
-    >>> from sklearn.preprocessing import OneHotEncoder
-    >>> enc = OneHotEncoder()
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
-[1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           handle_unknown='error', n_values='auto', sparse=True)
-    >>> enc.n_values_
-    array([2, 3, 4])
-    >>> enc.feature_indices_
-    array([0, 2, 5, 9])
-    >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+
     See also
     --------
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
