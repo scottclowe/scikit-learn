@@ -578,7 +578,6 @@ class StratifiedKFold(_BaseKFold):
 
 
 class StratifiedPercentileKFold(_BaseKFold):
-
     """Stratified Percentile K-Folds cross validation iterator
     Provides train/test indices to split data in train test sets.
     This cross-validation object is a variation of KFold that
@@ -586,6 +585,7 @@ class StratifiedPercentileKFold(_BaseKFold):
     are made by placing one sample in every K samples in the test
     set, which preserves the overall distribution of the target
     variable present both the training and test sets of each fold.
+
     Parameters
     ----------
     y : array-like, [n_samples]
@@ -598,6 +598,7 @@ class StratifiedPercentileKFold(_BaseKFold):
     random_state : None, int or RandomState
         Pseudo-random number generator state used for random
         sampling. If None, use default numpy RNG for shuffling
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -619,6 +620,7 @@ class StratifiedPercentileKFold(_BaseKFold):
     TRAIN: [0 2] TEST: [1 3]
     [[13 14]
      [13 14]] [ 0.4  0.2]
+
     Notes
     -----
     Each fold is sized either the floor or ceil of (n_samples / n_folds), in a
@@ -643,11 +645,9 @@ class StratifiedPercentileKFold(_BaseKFold):
         else:
             rng = self.random_state
 
-        # For each X percentile,
-        # Put each of the values into a unique fold
+        # For each X percentile, put each of the values into a unique fold
         # Do this by shuffling an array, holding indices from 0 to num_in_pc
         # in dim0, repeated K times in dim1
-
         n_windows = ceil(n_samples / n_folds)
 
         # Make a matrix identifying which fold each sample is in test set
