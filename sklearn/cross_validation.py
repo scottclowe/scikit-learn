@@ -578,6 +578,7 @@ class StratifiedKFold(_BaseKFold):
 
 
 class StratifiedPercentileKFold(_BaseKFold):
+
     """Stratified Percentile K-Folds cross validation iterator
     Provides train/test indices to split data in train test sets.
     This cross-validation object is a variation of KFold that
@@ -593,7 +594,7 @@ class StratifiedPercentileKFold(_BaseKFold):
         Number of folds. Must be at least 2.
     shuffle : boolean, optional
         Whether to shuffle each stratification of the data before splitting
-        into batches. If shuffle is enabled, 
+        into batches. If shuffle is enabled,
     random_state : None, int or RandomState
         Pseudo-random number generator state used for random
         sampling. If None, use default numpy RNG for shuffling
@@ -624,53 +625,55 @@ class StratifiedPercentileKFold(_BaseKFold):
     random order. The total number of samples in all the folds is n_samples,
     with each sample appearing exactly once.
     """
-    
+
     def __init__(self, y, n_folds=3, indices=None, shuffle=False,
                  random_state=None, shuffle_windows=False):
         super(StratifiedPercentileKFold, self).__init__(
             len(y), n_folds, indices, shuffle, random_state)
-        
+
         self.shuffle_windows = shuffle_windows
-        
+
         y = np.asarray(y)
         self.y = y
-        
+
         n_samples = y.shape[0]
-        
+
         if self.shuffle:
             rng = check_random_state(self.random_state)
         else:
             rng = self.random_state
-        
+
         # For each X percentile,
         # Put each of the values into a unique fold
         # Do this by shuffling an array, holding indices from 0 to num_in_pc
         # in dim0, repeated K times in dim1
-        
+
         n_windows = ceil(n_samples / n_folds)
-        
+
         # Make a matrix identifying which fold each sample is in test set
         v = np.arange(n_folds)
         v = np.expand_dims(v, 0)
-        v = np.tile(v, [n_windows,1])
-        #print(v)
-        
+        v = np.tile(v, [n_windows, 1])
+        # print(v)
+
         # get number of samples in each window (method 1)
-        #split_edges = np.linspace(0, n_samples, n_folds+1)
-        #split_edges = np.round(split_edges)
-        #n_samples_per_window = np.diff(split_edges)
-        
+        # split_edges = np.linspace(0, n_samples, n_folds+1)
+        # split_edges = np.round(split_edges)
+        # n_samples_per_window = np.diff(split_edges)
+
         # get number of samples in each window (method 2)
-        split_edges = np.arange(n_windows+1) * n_samples / n_windows
+        split_edges = np.arange(n_windows + 1) * n_samples / n_windows
         split_edges = np.round(split_edges)
         n_samples_per_window = np.diff(split_edges)
-        
+
         if self.shuffle_windows:
             # randomly wrap this vector
-            n_samples_per_window = np.roll(n_samples_per_window, rng.randint(n_windows))
-        
+            n_samples_per_window = np.roll(
+                n_samples_per_window,
+                rng.randint(n_windows))
+
         # drop some folds as possibilities
-        windows_to_shorten = np.where(n_samples_per_window<n_folds)[0]
+        windows_to_shorten = np.where(n_samples_per_window < n_folds)[0]
         # need to know which order to drop each fold number
         # drop each fold once at most
         # This doesn't need to be picked at random
@@ -680,19 +683,19 @@ class StratifiedPercentileKFold(_BaseKFold):
             fold_drop_order = np.arange(n_folds)
         j = 0
         for i in windows_to_shorten:
-            v[i,fold_drop_order[j]] = -1
+            v[i, fold_drop_order[j]] = -1
             j += 1
-        
+
         # Shuffle which fold each sample is in test set for
         if self.shuffle:
             for i in range(n_windows):
                 rng.shuffle(v[i])
-        
+
         # Wrap the matrix into a flat array
         v = np.ravel(v)
         # removing unnecessary values from the middle
-        v = v[v!=-1]
-        
+        v = v[v != -1]
+
         # Sort the regression targets in ascending order
         sort_idx = np.argsort(y)
         # sorted_y = y[sort_idx] is now in ascending order
@@ -700,11 +703,11 @@ class StratifiedPercentileKFold(_BaseKFold):
         # Sort the sort index to turn the indices back into ascending order
         inverse_of_sort_idx = np.argsort(sort_idx)
         # now we should have y = sorted_y[inverse_of_sort_idx]
-        
+
         # v refers to when to include each element in their sorted order
-        # So use the inverse of the sorting indices to map v to the ordering of y
+        # So use the inverse of the sorting indices to map v to the ordering of
+        # y
         self.test_folds = v[inverse_of_sort_idx]
-        
 
     def _iter_test_masks(self):
         for i in range(self.n_folds):
