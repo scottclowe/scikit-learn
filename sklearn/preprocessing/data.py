@@ -1162,7 +1162,6 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <example_linear_model_plot_polynomial_interpolation.py>`
     """
-
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1921,7 +1920,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
     """
-
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
