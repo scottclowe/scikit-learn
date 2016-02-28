@@ -6,6 +6,7 @@ normalization, binarization and imputation methods.
 from ._function_transformer import FunctionTransformer
 
 from .data import Binarizer
+from .data import BoxCoxScaler
 from .data import KernelCenterer
 from .data import MinMaxScaler
 from .data import MaxAbsScaler
@@ -33,6 +34,7 @@ from .imputation import Imputer
 
 __all__ = [
     'Binarizer',
+    'BoxCoxScaler',
     'FunctionTransformer',
     'Imputer',
     'KernelCenterer',
